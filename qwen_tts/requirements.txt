@@ -1,0 +1,9 @@
+torch>=2.1
+qwen-tts
+soundfile
+fastapi
+uvicorn[standard]
+python-multipart
+streamlit
+requests
+
