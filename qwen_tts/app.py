@@ -229,6 +229,10 @@ with tab_design:
     with col_left:
         language_vd = st.selectbox("Language", LANGUAGES, key="vd_lang")
 
+                # Apply any pending preset BEFORE the widget is instantiated this run
+        if st.session_state.get("vd_preset_pending") is not None:
+            st.session_state["vd_instruct"] = st.session_state.pop("vd_preset_pending")
+
         instruct_vd = st.text_area(
             "Voice description *", height=140, key="vd_instruct",
             placeholder="e.g. Warm, confident narrator with slight British accent.",
@@ -237,7 +241,7 @@ with tab_design:
         st.caption("**Quick presets:**")
         for p in VOICE_DESIGN_PRESETS:
             if st.button(f"📋 {p[:48]}{'…' if len(p) > 48 else ''}", key=f"vd_preset_{hash(p)}", use_container_width=True):
-                st.session_state["vd_instruct"] = p
+                st.session_state["vd_preset_pending"] = p
                 st.rerun()
 
         gen_kwargs_vd = advanced_sampling_controls("vd")
@@ -258,7 +262,7 @@ with tab_design:
                         "text": text_vd, "instruct": instruct_vd, "language": language_vd,
                         **{k: str(v) for k, v in gen_kwargs_vd.items()},
                     }
-                    resp = requests.post(f"{BACKEND_URL}/generate/voice-design", data=data, timeout=180)
+                    resp = requests.post(f"{BACKEND_URL}/generate/voice-design", data=data, timeout=1000)
                     render_result(resp, "voice_design.wav")
                 except requests.exceptions.ConnectionError:
                     st.error("❌ Cannot connect to backend.")
@@ -346,7 +350,7 @@ with tab_clone:
                         files = {"ref_audio": (ref_audio_file.name, ref_audio_file.read(), "audio/wav")}
 
                     resp = requests.post(
-                        f"{BACKEND_URL}/generate/voice-clone", data=data, files=files, timeout=180,
+                        f"{BACKEND_URL}/generate/voice-clone", data=data, files=files, timeout=1000,
                     )
                     render_result(resp, "voice_clone.wav")
                 except requests.exceptions.ConnectionError:
